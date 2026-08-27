@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Entraînement">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Mon entraînement</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#17202a;--muted:#667085;--blue:#2563eb;--line:#e1e5ea;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{background:#fff;position:sticky;top:0;z-index:5;padding:15px 14px 10px;border-bottom:1px solid var(--line);padding-top:calc(15px + env(safe-area-inset-top))}
+h1{font-size:21px;margin:0}.muted{font-size:13px;color:var(--muted)}main{max-width:720px;margin:auto;padding:14px 14px 120px}
+.tabs{display:flex;gap:6px;margin-top:12px}.tab{flex:1;padding:9px 4px;background:#eef0f3;border:0;border-radius:9px;font-weight:700}.tab.active{background:var(--blue);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}h2{font-size:17px;margin:0 0 5px}
+.note{background:#f8fafc;border-radius:9px;padding:10px;font-size:13px;line-height:1.5}.row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center;margin:7px 0}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:16px;background:white}button{border:0;border-radius:9px;padding:10px 12px;font-weight:700}
+.primary{background:var(--blue);color:#fff}.secondary{background:#eef2ff;color:#1d4ed8}.danger{background:#fee4e2;color:var(--red)}
+.timer{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:696px;margin:auto;background:#111827;color:#fff;border-radius:14px;padding:12px;z-index:10;box-shadow:0 8px 30px #0004;display:none}
+.timer strong{font-size:26px}.timer button{float:right;margin-left:6px}.history{border-bottom:1px solid var(--line);padding:10px 0}.history:last-child{border:0}
+</style>
+</head>
+<body>
+<header>
+<h1>💪 Mon entraînement</h1>
+<div class="muted">Musculation maison · escalade · progression</div>
+<div class="tabs">
+<button class="tab active" data-day="J1">J1</button>
+<button class="tab" data-day="J2">J2</button>
+<button class="tab" data-day="J3">J3</button>
+<button class="tab" data-day="H">Historique</button>
+</div>
+</header>
+<main id="app"></main>
+<div class="timer" id="timer">Repos : <strong id="clock">01:30</strong>
+<button onclick="stopTimer()">Terminer</button><button onclick="addTime(30)">+30 s</button></div>
+<script>
+const workouts={
+J1:{title:"Tirage / dos / biceps",warm:["Rotations épaules + poignets — 1 min","Scapular pull-ups — 10","Pompes faciles — 10","Suspension facile — 2 × 10 s"],ex:[
+["Tractions",4,"6–8",120],["Tractions négatives",3,"3–5",90,"Monte avec un support stable. Menton au-dessus de la poutre, retire l'aide des jambes, puis descends lentement pendant 4–5 secondes."],["Tractions supination",2,"5–8",90],["Gainage",2,"30–45 s",45]]},
+J2:{title:"Poussée / épaules / triceps",warm:["Rotations épaules + poignets — 1 min","Scapular push-ups — 10","Pompes faciles — 10","Planche — 20–30 s"],ex:[
+["Pompes",4,"6–10",90],["Pompes serrées",3,"5–8",90],["Pike push-ups",3,"5–8",90],["Planche latérale",2,"30 s / côté",30]]},
+J3:{title:"Complet / préhension",warm:["Rotations épaules + poignets — 1 min","Scapular pull-ups — 10","Pompes faciles — 10","Suspension facile — 2 × 10 s"],ex:[
+["Tractions",3,"5–7",120],["Pompes",3,"8–10",90],["Pike push-ups",2,"6–8",90],["Suspension à la poutre",3,"10–20 s",90,"Prise confortable. Pas de petites prises à fond : l'escalade sollicite déjà les doigts."],["Hollow body",2,"20–30 s",45]]}
+};
+let day="J1", interval=null, remaining=0;
+const KEY="monEntrainementPWA_v1";
+function getLogs(){try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch{return[]}}
+function setLogs(a){localStorage.setItem(KEY,JSON.stringify(a))}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function render(){
+document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.day===day));
+if(day==="H"){renderHistory();return}
+const w=workouts[day];
+let h=`<div class="card"><h2>${day} — ${w.title}</h2><div class="muted">Échauffement · ~5 min</div><div class="note">• ${w.warm.join("<br>• ")}</div></div>`;
+w.ex.forEach((e,i)=>{h+=`<div class="card"><h2>${i+1}. ${e[0]}</h2><div class="muted">${e[1]} séries · ${e[2]} · repos ${fmt(e[3])}</div>`;
+for(let s=0;s<e[1];s++) h+=`<div class="row"><label>Série ${s+1}</label><input id="x${i}-${s}" placeholder="${e[2]}" inputmode="decimal"></div>`;
+if(e[4])h+=`<details><summary>Technique</summary><p class="muted">${e[4]}</p></details>`;
+h+=`<br><button class="secondary" onclick="timer(${e[3]})">⏱ Lancer le repos</button></div>`});
+h+=`<div class="card"><h2>Fin de séance</h2><div class="row"><label>Difficulté</label><select id="difficulty"><option>Facile</option><option selected>Moyenne</option><option>Difficile</option></select></div><input id="comment" placeholder="Note facultative"><br><br><button class="primary" onclick="saveWorkout()">✓ Enregistrer la séance</button></div>`;
+h+=`<div class="card"><h2>🌙 Courbatures / récupération</h2><div class="muted">Comment te sens-tu aujourd'hui ?</div><br><select id="soreness"><option>Pas de courbatures</option><option>Légères</option><option>Modérées</option><option>Fortes</option><option>Douleur inhabituelle</option></select></div>`;
+document.getElementById("app").innerHTML=h}
+function saveWorkout(){const w=workouts[day];const results=w.ex.map((e,i)=>({name:e[0],sets:Array.from({length:e[1]},(_,s)=>document.getElementById(`x${i}-${s}`).value)}));const a=getLogs();a.unshift({date:new Date().toISOString(),day,title:w.title,results,difficulty:document.getElementById("difficulty").value,comment:document.getElementById("comment").value,soreness:document.getElementById("soreness").value});setLogs(a);alert("Séance enregistrée ✓");render()}
+function timer(sec){clearInterval(interval);remaining=sec;document.getElementById("timer").style.display="block";updateTimer();interval=setInterval(()=>{remaining--;updateTimer();if(remaining<=0){clearInterval(interval);document.getElementById("clock").textContent="GO !";if(navigator.vibrate)navigator.vibrate([200,100,200])}},1000)}
+function updateTimer(){document.getElementById("clock").textContent=fmt(Math.max(0,remaining))}
+function addTime(s){remaining=Math.max(0,remaining+s);updateTimer()}
+function stopTimer(){clearInterval(interval);document.getElementById("timer").style.display="none"}
+function renderHistory(){const a=getLogs();let h=`<div class="card"><h2>Historique</h2><div class="muted">${a.length} séance(s) enregistrée(s) sur cet appareil.</div>`;if(!a.length)h+=`<p class="muted">Aucune séance pour le moment.</p>`;a.forEach(x=>{h+=`<div class="history"><b>${x.day} — ${x.title}</b><div class="muted">${new Date(x.date).toLocaleString("fr-FR")} · ${x.difficulty}</div>`;x.results.forEach(r=>h+=`<div class="muted">${r.name} : ${r.sets.join(" / ")}</div>`);h+=`<div class="muted">Courbatures : ${x.soreness}</div>${x.comment?`<div class="muted">Note : ${x.comment}</div>`:""}</div>`});h+=`</div><div class="card"><h2>Règle de progression</h2><div class="note">Quand tu atteins le haut de la fourchette sur toutes les séries avec une bonne technique, augmente progressivement la difficulté. Pas besoin d'aller à l'échec à chaque séance.</div></div><div class="card"><button class="danger" onclick="if(confirm('Supprimer tout l’historique ?')){localStorage.removeItem(KEY);renderHistory()}">Supprimer l’historique</button></div>`;document.getElementById("app").innerHTML=h}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{day=b.dataset.day;render()}));
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
+render();
+</script>
+</body>
+</html>

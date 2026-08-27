@@ -6,7 +6,6 @@
   "display": "standalone",
   "background_color": "#f4f6f8",
   "theme_color": "#2563eb",
-  "description": "Suivi de séances de musculation maison, escalade et récupération.",
   "icons": [
     {
       "src": "./icon-192.png",

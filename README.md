@@ -1,11 +1,10 @@
-# Mon entraînement — PWA
+# Mon entraînement — PWA v2
 
-1. Crée un dépôt GitHub public, par exemple `mon-entrainement`.
-2. Envoie tous les fichiers de ce dossier à la racine du dépôt.
-3. GitHub : Settings → Pages.
-4. Source : Deploy from a branch.
-5. Branch : main ; dossier : / (root).
-6. Ouvre l’URL GitHub Pages dans Safari sur iPhone.
-7. Safari → Partager → Ajouter à l’écran d’accueil.
+Nouveautés :
+- date de séance enregistrée dans l'historique ;
+- onglet Calendrier ;
+- alarme sonore + vibration à la fin du repos.
 
-Les données de séances sont enregistrées localement sur l’appareil.
+## Mise à jour GitHub Pages
+Remplace les anciens fichiers du dépôt par ceux-ci, puis fais un commit.
+GitHub Pages redéploiera automatiquement l'application.
